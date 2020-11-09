@@ -3,6 +3,7 @@
 //
 
 #include "test_widget.hpp"
+#include "message_service.hpp"
 #include "qt_executor.hpp"
 #include <QString>
 #include <string>
@@ -32,45 +33,21 @@ test_widget::run_demo()
 {
     using namespace std::literals;
 
-    auto timer = net::high_resolution_timer(co_await net::this_coro::executor);
+    auto service = message_service(ioexec_);
+    auto conn = co_await service.connect();
 
     auto done = false;
 
     listen_for_stop([&] {
         done = true;
-        timer.cancel();
+        conn.disconnect();
+        service.reset();
     });
 
     while (!done)
     {
-        for (int i = 0; i < 10; ++i)
-        {
-            timer.expires_after(1s);
-            auto ec = boost::system::error_code();
-            co_await timer.async_wait(
-                net::redirect_error(net::use_awaitable, ec));
-            if (ec)
-            {
-                done = true;
-                break;
-            }
-            this->setText(
-                QString::fromStdString(std::to_string(i + 1) + " seconds"));
-        }
-
-        for (int i = 10; i--;)
-        {
-            timer.expires_after(250ms);
-            auto ec = boost::system::error_code();
-            co_await timer.async_wait(
-                net::redirect_error(net::use_awaitable, ec));
-            if (ec)
-            {
-                done = true;
-                break;
-            }
-            this->setText(QString::fromStdString(std::to_string(i)));
-        }
+        auto message = co_await conn.consume();
+        this->setText(QString::fromStdString(message));
     }
     co_return;
 }
@@ -98,3 +75,9 @@ test_widget::closeEvent(QCloseEvent *event)
     stop_all();
     QWidget::closeEvent(event);
 }
+
+test_widget::test_widget(const boost::asio::io_context::executor_type &ioexec,
+                         QWidget *parent)
+    : QTextEdit(parent)
+    , ioexec_(ioexec)
+{}

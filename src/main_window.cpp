@@ -3,8 +3,10 @@
 #include <QMdiArea>
 #include <QMenuBar>
 
-main_window::main_window(QWidget *parent, Qt::WindowFlags flags)
+main_window::main_window(net::io_context::executor_type const &io_exec,
+                         QWidget *parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags)
+    , io_exec_(io_exec)
 {
     mdi_area = new QMdiArea();
     mdi_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -19,7 +21,7 @@ main_window::main_window(QWidget *parent, Qt::WindowFlags flags)
 void
 main_window::make_new_widget()
 {
-    auto view = new test_widget();
+    auto view = new test_widget(io_exec_);
     view->setAttribute(Qt::WA_DeleteOnClose);
     mdi_area->addSubWindow(view);
     view->show();

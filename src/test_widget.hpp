@@ -9,7 +9,8 @@ class test_widget
 {
     Q_OBJECT
 public:
-    using QTextEdit::QTextEdit;
+    test_widget(net::io_context::executor_type const &ioexec,
+                QWidget *parent = nullptr);
 
 private:
     void
@@ -21,6 +22,7 @@ private:
 protected:
     void
     closeEvent(QCloseEvent *event) override;
+
 private:
     net::awaitable<void>
     run_demo();
@@ -31,6 +33,7 @@ private:
     void
     stop_all();
 
+    net::io_context::executor_type ioexec_;
     std::vector<std::function<void()>> stop_signals_;
     bool stopped_ = false;
 };
