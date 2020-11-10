@@ -1,14 +1,17 @@
 #pragma once
 
 #include <QApplication>
+#include <boost/noncopyable.hpp>
 
-class qt_work_event_base : public QEvent
+class qt_work_event_base : public QEvent, public boost::noncopyable
 {
 public:
     qt_work_event_base()
         : QEvent(generated_type())
     {
     }
+
+    virtual ~qt_work_event_base() = default;
 
     virtual void
     invoke() = 0;
