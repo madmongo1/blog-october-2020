@@ -1,37 +1,46 @@
 #pragma once
 
 #include "config.hpp"
+#include "qt_work_event.hpp"
 #include <QApplication>
 #include <boost/noncopyable.hpp>
 #include <cassert>
-#include "qt_work_event.hpp"
 
-struct qt_execution_context : net::execution_context
+struct qt_execution_context
+    : net::execution_context
     , boost::noncopyable
 {
-    qt_execution_context(QApplication *app = qApp)
-        : app_(app)
-    {
-        instance_ = this;
-    }
+    qt_execution_context(QObject *target = qApp);
+
+    ~qt_execution_context();
 
     template<class F>
     void
-    post(F f)
-    {
-        // c++20 auto template deduction
-        auto event = new basic_qt_work_event(std::move(f));
-        QApplication::postEvent(app_, event);
-    }
+    post(F f);
 
     static qt_execution_context &
-    singleton()
+    singleton();
+
+    struct filter : QObject
     {
-        assert(instance_);
-        return *instance_;
-    }
+        filter();
+        auto
+        eventFilter(QObject *, QEvent *event) -> bool override;
+    };
 
 private:
     static qt_execution_context *instance_;
-    QApplication *app_;
+    QObject *target_;
+    filter filter_;
 };
+
+// impl
+
+template<class F>
+void
+qt_execution_context::post(F f)
+{
+    // c++20 auto template deduction
+    auto event = new basic_qt_work_event(std::move(f));
+    QApplication::postEvent(target_, event);
+}

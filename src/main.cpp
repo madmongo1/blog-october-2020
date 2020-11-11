@@ -1,6 +1,5 @@
 #include "main_window.hpp"
 #include "qt_execution_context.hpp"
-#include "qt_net_application.hpp"
 #include <QApplication>
 #include <QTextEdit>
 #include <iostream>
@@ -8,7 +7,7 @@
 int
 main(int argc, char **argv)
 {
-    qt_net_application app(argc, argv);
+    QApplication app(argc, argv);
     qt_execution_context exec_context;
 
     net::io_context ioctx;
